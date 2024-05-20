@@ -42,7 +42,7 @@ export default function Books() {
                 [] // queries (optional)
             );
 
-            if(result.documents){
+            if(result.documents && result.documents.length > 0){
                 setAuthors(( result.documents as unknown ) as Array<Author>)
                 setSelectedAuthors([ result.documents[0].$id ]);
             }

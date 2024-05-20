@@ -1,6 +1,5 @@
 import React, {useContext} from "react";
-import {UserContext} from "@/components/AuthedContext/AuthedContext";
-import {account} from "@/appwrite";
+import {logout} from "@/appwrite";
 import {useRouter} from "next/navigation";
 
 interface ComponentProps{
@@ -9,18 +8,7 @@ interface ComponentProps{
 
 
 export default function Sidebar(props: ComponentProps){
-    const { user, setUser } = useContext(UserContext);
     const router = useRouter();
-
-    const handleSignOut = async () => {
-        try{
-            const res = await account.deleteSessions();
-            setUser(null);
-            router.push("/login")
-        }catch(err) {
-            console.log(err)
-        }
-    }
 
     return (
         <div>
@@ -96,8 +84,11 @@ export default function Sidebar(props: ComponentProps){
                             </a>
                         </li>
                         <li>
-                            <a onClick={() => handleSignOut()}
-                               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <div onClick={async () => {
+                                await logout();
+                                router.push("/login")
+                            }}
+                               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group hover:cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                      strokeWidth="1.5" stroke="currentColor"
                                      className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -107,7 +98,7 @@ export default function Sidebar(props: ComponentProps){
                                 </svg>
 
                                 <span className="flex-1 ms-3 whitespace-nowrap">Sign Out</span>
-                            </a>
+                            </div>
                         </li>
                     </ul>
                 </div>

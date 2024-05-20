@@ -1,44 +1,13 @@
-"use client"
-import {createContext, Dispatch, useEffect, useState} from "react";
-import { account } from "@/appwrite";
+import { createContext } from "react";
 
-interface ContextProps {
-    children: React.ReactNode,
-}
+export const AuthContext = createContext<{
+    authStatus: boolean;
+    setAuthStatus: (status: boolean) => void;
+}>({
+    authStatus: false,
+    setAuthStatus: () => {},
+});
 
-interface User {
-    email: string;
-    id: string;
-}
+export const AuthProvider = AuthContext.Provider;
 
-export interface ctx {
-    user: User,
-    setUser: Dispatch<any>
-}
-
-export const UserContext= createContext({} as ctx);
-
-
-export default function ContextProvider(context: ContextProps) {
-    const [user, setUser] = useState({} as User);
-
-    useEffect(()=>
-    {
-        (async function()
-        {
-            try{
-                const res=await account.get();
-                // const res=await account.getSession('current');
-                setUser({ email: res.email, id: res.$id})
-                console.log(res)
-            }catch(err) {
-                console.log(err)
-            }
-
-        }())
-    },[])
-
-    return(
-        <UserContext.Provider value={{user, setUser}} >{context.children}</UserContext.Provider>
-    )
-}
+export default AuthContext;

@@ -2,7 +2,7 @@
 import Sidebar from "@/components/Sidebar/Sidebar";
 import {useEffect, useState} from "react";
 import {Author, Book, BookState, Publisher} from "@/lib/types/books";
-import {databases} from "@/appwrite";
+import {databases, storage} from "@/appwrite";
 import {ID, Query} from "appwrite";
 import moment from "moment";
 import {useRouter} from "next/navigation";
@@ -34,6 +34,7 @@ export default function BookEdit(queryParams: PageParams) {
     const [ comment, setComment ] = useState("");
     const [ tags, setTags ] = useState(Array<string>());
     const [ pages, setPages ] = useState(0);
+
 
     useEffect(() => {
         const loadData = async () => {
@@ -121,11 +122,28 @@ export default function BookEdit(queryParams: PageParams) {
     }, [updatedPublishers]);
 
     const Avatar = () => {
-        const [ image, setImage ] = useState();
+        const [ image, setImage ] = useState<URL>();
+
+        useEffect(() => {
+            const getImage = async () => {
+                try{
+                    const result = storage.getFilePreview(
+                        process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
+                        queryParams.params.id, // fileId
+                    );
+
+                    console.log(result);
+                    setImage(result);
+                }catch (e){
+                }
+            }
+
+            getImage();
+        }, []);
 
         const getAvatar = () => {
             if (image) {
-                return (<img className="rounded w-36 h-36" src={image} alt="Book cover" />);
+                return (<img className="rounded w-36 h-36" src={image.href} alt="Book cover" />);
             }else{
                 return (
                     <div className="rounded w-64 h-64 flex center flex-col justify-center content-center">

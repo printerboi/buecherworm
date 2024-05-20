@@ -87,15 +87,15 @@ export default function Books() {
             const getImage = async () => {
                 try{
                     const result = storage.getFilePreview(
-                        process.env.NEXT_PUBLIC_DATABASE as string, // bucketId
-                        "664b2c760021e6c339b8", // fileId
+                        process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
+                        item.$id, // fileId
                     );
 
                     console.log(result);
                     setImage(result);
                 }catch (e){
                     const result = storage.getFilePreview(
-                        process.env.NEXT_PUBLIC_DATABASE as string, // bucketId
+                        process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
                         "PLACEHOLDER", // fileId
                     );
 

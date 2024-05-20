@@ -1,40 +1,36 @@
 "use client";
-import {account} from "@/appwrite";
+import {account, login} from "@/appwrite";
 import {FormEvent, useContext, useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
-import {UserContext} from "@/components/AuthedContext/AuthedContext";
 import Alert from "@/components/Alert/Alert";
+import useAuth from "@/components/AuthedContext/useAuth";
 
 
 export default function Login(){
-    const { user, setUser } = useContext(UserContext)
     const router = useRouter()
     const [email,setEmail] = useState("");
     const [password,setPassword] = useState("");
     const [loading,setLoading] = useState(false);
     const [ error, setError ] = useState(false);
+    const {setAuthStatus} = useAuth()
 
     const signUpWithEmail = async (e:  FormEvent<HTMLFormElement>) => {
         setLoading(true)
 
         try{
-            await account.createEmailPasswordSession(email,password);
-            const userReq= await account.get();
-            setUser({email: userReq.email, id: userReq.$id});
-            setLoading(false);
-            router.push("/backend/dashboard")
+            console.log("trying login...");
+            const session = await login({ email, password });
+            if (session) {
+                setAuthStatus(true);
+                console.log("login successfull");
+                router.push("/backend/dashboard");
+            }
         }catch(err) {
             setLoading(false);
             setError(true);
             console.log(err)
         }
     }
-
-    useEffect(() => {
-        if(user){
-            router.replace("/backend/dashboard");
-        }
-    }, []);
 
     return(
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
