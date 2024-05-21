@@ -30,8 +30,8 @@ export default function Books() {
     const [ comment, setComment ] = useState("");
     const [ tags, setTags ] = useState(Array<string>());
     const [ pages, setPages ] = useState(0);
-
-    const [ imageFile, setImageFile ] = useState<File>();
+    const [ isbn, setIsbn ] = useState("");
+    const [ loadImage, setLoadImage ] = useState(false);
 
 
     useEffect(() => {
@@ -69,82 +69,14 @@ export default function Books() {
     }, [updatedPublishers]);
 
 
-    const Avatar = ({ imageFile, setImageFile } : { imageFile: File | undefined, setImageFile: Dispatch<File> }) => {
-        const [ image, setImage ] = useState("");
-
-        useEffect(() => {
-
-            const reader= new FileReader();
-            // it's onload event and you forgot (parameters)
-            reader.onload = function(e)  {
-                if(e.target?.result){
-                    setImage(e.target.result as string);
-                }
-            }
-            // you have to declare the file loading
-            if(imageFile){
-                reader.readAsDataURL(imageFile);
-            }
-
-        }, [imageFile]);
-
-        const getAvatar = () => {
-            if (image) {
-                return (
-                    <img className="bg-cover" src={image} alt="Extra large avatar" />
-                );
-            } else {
-                return (
-                    <div className="rounded w-64 h-64 flex center flex-col justify-center content-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-                             stroke="currentColor" className="w-48 h-48 text-gray-500 dark:text-gray-400 self-center">
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
-                        </svg>
-                    </div>
-                );
-            }
-        }
-
-        return (
-            <div className="flex flex-col">
-                <div className="w-full flex flex-row justify-center">
-                    <div className="relative w-64 h-64 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-                        {getAvatar()}
-                    </div>
-                </div>
-
-                <div className="flex flex-col w-1/3 justify-center content-center self-center mt-8">
-                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                           htmlFor="file_input">Upload file</label>
-                    <input
-                        className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                        id="file_input" type="file"
-                        onChange={(e: any) => {
-                            if(e.target.files) {
-                                setImageFile(e.target.files[0]);
-                            }
-                        }}
-                    />
-
-                </div>
-            </div>
-        );
-    }
 
     return (
         <Sidebar>
             <div className="flex flex-col items-center">
-                <div className="w-full mt-8 divide-y gap-16">
-                    <Avatar imageFile={imageFile} setImageFile={setImageFile}/>
-                </div>
-
                 <div className="relative overflow-x-auto flex flex-col w-1/2 justify-center my-16">
                     <form className="flex flex-col gap-8" onSubmit={async (formev) => {
                         formev.preventDefault();
-                        console.log(name, selectedAuthors, selectedPublisher, publishedIn, readingState)
-                        console.log(name != "" && selectedAuthors.length > 0 && selectedPublisher != "" && publishedIn >= 1970 && publishedIn <= new Date().getFullYear() && ( readingState == 0 || readingState == 1 || readingState == 2 ));
-                        if(name != "" && selectedAuthors.length > 0 && selectedPublisher != "" && publishedIn >= 1970 && publishedIn <= new Date().getFullYear() && ( readingState == 0 || readingState == 1 || readingState == 2 )){
+                        if(name != "" && selectedAuthors.length > 0 && selectedPublisher != "" && publishedIn >= 1024 && publishedIn <= new Date().getFullYear() && ( readingState == 0 || readingState == 1 || readingState == 2 )){
                             try {
                                 let result;
 
@@ -163,7 +95,9 @@ export default function Books() {
                                             state: readingState,
                                             rating: rating,
                                             finishedAt: finishedAt,
-                                            pages: pages
+                                            pages: pages,
+                                            isbn: isbn,
+                                            loadImage: loadImage
                                         }
                                     );
                                 }else {
@@ -179,35 +113,40 @@ export default function Books() {
                                             tags: tags,
                                             comment: comment,
                                             state: readingState,
-                                            pages: pages
+                                            pages: pages,
+                                            isbn: isbn,
+                                            loadImage: loadImage
                                         }
                                     );
                                 }
 
                                 console.log(result);
 
-                                if(imageFile && result.$id) {
-                                    const uploadResult = await storage.createFile(
-                                        process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
-                                        result.$id, // fileId
-                                        imageFile
-                                    );
-                                }
-
-                                //router.push("/backend/books");
+                                router.push("/backend/books");
                             }catch (err) {
                                 console.log(err);
                             }
                         }
                     }}>
-                        <div>
-                            <label htmlFor="book_name"
-                                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-                            <input type="text" id="book_name"
-                                   className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                                   placeholder="Name of the book" required
-                                   onChange={(e) => setName(e.target.value)}
-                            />
+                        <div className="flex flex-row gap-8">
+                            <div className="w-1/2">
+                                <label htmlFor="book_name"
+                                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                                <input type="text" id="book_name"
+                                       className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                                       placeholder="Name of the book" required
+                                       onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
+                            <div className="w-1/2">
+                                <label htmlFor="book_isbn"
+                                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">ISBN</label>
+                                <input type="text" id="book_isbn"
+                                       className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                                       placeholder="ISBN of the book" required
+                                       onChange={(e) => setIsbn(e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="flex flex-row gap-8">
@@ -217,8 +156,10 @@ export default function Books() {
                                 <select multiple id="authors"
                                         className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                                         required
-                                        onChange={(e) => { console.log(e.target.value) }}
-                                >
+                                        onChange={(e) => {
+                                            const values = Array.from(e.target.selectedOptions, option => option.value);
+                                            setSelectedAuthors(values);
+                                        }}                                >
                                     {authors.map((author) => {
                                             return <option key={author.$id} value={author.$id}>{author.Name}</option>
                                         }
@@ -317,7 +258,7 @@ export default function Books() {
                         </div>
 
                         <div className="flex flex-row gap-8">
-                            <div className="w-1/2">
+                            <div className="w-1/3">
                                 <label htmlFor="pages"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Number
                                     of pages</label>
@@ -328,7 +269,7 @@ export default function Books() {
                                 />
                             </div>
 
-                            <div className="w-1/2">
+                            <div className="w-1/3">
                                 <label htmlFor="book_year"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Published
                                     in</label>
@@ -337,6 +278,15 @@ export default function Books() {
                                        placeholder={new Date().getFullYear().toString()} required
                                        onChange={(e) => setPublishedIn(parseInt(e.target.value))}
                                 />
+                            </div>
+
+                            <div className="w-1/3 flex flex-col justify-center">
+                                <label className="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value={""} onChange={(e) => setLoadImage(e.target.checked)} checked={loadImage} className="sr-only peer"/>
+                                    <div
+                                        className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Load Cover</span>
+                                </label>
                             </div>
                         </div>
 
@@ -349,7 +299,7 @@ export default function Books() {
                                         required
                                         onChange={(e) => {
                                             const selectedState = parseInt(e.target.value);
-                                            if(selectedState != 2) {
+                                            if (selectedState != 2) {
                                                 setFinishedAt("1970-01-01 00:00:00");
                                                 setRating(0.0);
                                             }
@@ -377,7 +327,7 @@ export default function Books() {
                             <div className="w-1/3">
                                 <label htmlFor="rating"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Rating</label>
-                                <input disabled={(readingState != 2)} type="number" min={0} max={10} id="rating"
+                                <input disabled={(readingState != 2)} type="number" min={0} max={10} step={0.1} id="rating"
                                        onChange={(e) => setRating(parseFloat(e.target.value))}
                                        className="bg-gray-50 border focus:outline-none border-gray-300 disabled:text-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                                 />

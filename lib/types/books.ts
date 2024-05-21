@@ -26,5 +26,7 @@ export interface Book{
     tags: Array<string>,
     comment?: string
     finishedAt?: number,
-    state: BookState
+    state: BookState,
+    isbn: string,
+    loadImage: boolean
 }

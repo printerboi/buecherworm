@@ -6,6 +6,7 @@ import {databases, storage} from "@/appwrite";
 import {ID, Query} from "appwrite";
 import moment from "moment";
 import {useRouter} from "next/navigation";
+import Select from "react-select/base";
 
 interface PageParams {
     params: {
@@ -34,6 +35,8 @@ export default function BookEdit(queryParams: PageParams) {
     const [ comment, setComment ] = useState("");
     const [ tags, setTags ] = useState(Array<string>());
     const [ pages, setPages ] = useState(0);
+    const [ isbn, setIsbn ] = useState("");
+    const [ loadImage, setLoadImage ] = useState(false);
 
 
     useEffect(() => {
@@ -58,7 +61,9 @@ export default function BookEdit(queryParams: PageParams) {
                     setPages(loadedBook.pages);
                     setPublishedIn(loadedBook.year);
                     setReadingState(loadedBook.state);
-                    console.log(moment(loadedBook.finishedAt).format('YYYY-DD-MM'));
+                    setIsbn(loadedBook.isbn);
+                    setLoadImage(loadedBook.loadImage);
+
                     if(loadedBook.finishedAt){
                         setFinishedAt(moment(loadedBook.finishedAt).format('YYYY-MM-DD'));
                     }
@@ -97,7 +102,6 @@ export default function BookEdit(queryParams: PageParams) {
 
             if(result.documents){
                 setAuthors(( result.documents as unknown ) as Array<Author>)
-                setSelectedAuthors([ result.documents[0].$id ]);
             }
         }
 
@@ -114,80 +118,21 @@ export default function BookEdit(queryParams: PageParams) {
 
             if(result.documents){
                 setPublisher(( result.documents as unknown ) as Array<Publisher>)
-                setSelectedPublisher(result.documents[0].$id);
             }
         }
 
         getPublishers();
     }, [updatedPublishers]);
 
-    const Avatar = () => {
-        const [ image, setImage ] = useState<URL>();
-
-        useEffect(() => {
-            const getImage = async () => {
-                try{
-                    const result = storage.getFilePreview(
-                        process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
-                        queryParams.params.id, // fileId
-                    );
-
-                    console.log(result);
-                    setImage(result);
-                }catch (e){
-                }
-            }
-
-            getImage();
-        }, []);
-
-        const getAvatar = () => {
-            if (image) {
-                return (<img className="rounded w-36 h-36" src={image.href} alt="Book cover" />);
-            }else{
-                return (
-                    <div className="rounded w-64 h-64 flex center flex-col justify-center content-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-                             stroke="currentColor" className="w-48 h-48 text-gray-500 dark:text-gray-400 self-center">
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
-                        </svg>
-                    </div>
-                );
-            }
-        }
-
-        return (
-            <div className="flex flex-col">
-                <div className="w-full flex flex-row justify-center">
-                    <div className="relative w-64 h-64 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-                        {getAvatar()}
-                    </div>
-                </div>
-
-                <div className="flex flex-col w-1/3 justify-center content-center self-center mt-8">
-                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                           htmlFor="file_input">Upload file</label>
-                    <input
-                        className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                        id="file_input" type="file"/>
-
-                </div>
-            </div>
-        );
-    }
 
     return (
         <Sidebar>
             <div className="flex flex-col items-center">
-                <div className="w-full mt-8 divide-y gap-16">
-                    <Avatar/>
-                </div>
 
                 <div className="relative overflow-x-auto flex flex-col w-1/2 justify-center my-16">
                     <form className="flex flex-col gap-8" onSubmit={async (formev) => {
                         formev.preventDefault();
-                        if(name != "" && selectedAuthors.length > 0 && selectedPublisher != "" && publishedIn >= 1970 && publishedIn <= new Date().getFullYear() && ( readingState == 0 || readingState == 1 || readingState == 2 )){
+                        if(name != "" && selectedAuthors.length > 0 && selectedPublisher != "" && publishedIn >= 1024 && publishedIn <= new Date().getFullYear() && ( readingState == 0 || readingState == 1 || readingState == 2 )){
                             try {
                                 if(readingState == 2) {
                                     await databases.updateDocument(
@@ -204,7 +149,9 @@ export default function BookEdit(queryParams: PageParams) {
                                             state: readingState,
                                             rating: rating,
                                             finishedAt: finishedAt,
-                                            pages: pages
+                                            pages: pages,
+                                            isbn: isbn,
+                                            loadImage: loadImage
                                         }
                                     );
                                 }else {
@@ -222,7 +169,9 @@ export default function BookEdit(queryParams: PageParams) {
                                             state: readingState,
                                             rating: null,
                                             finishedAt: null,
-                                            pages: pages
+                                            pages: pages,
+                                            isbn: isbn,
+                                            loadImage: loadImage
                                         }
                                     );
                                 }
@@ -232,15 +181,27 @@ export default function BookEdit(queryParams: PageParams) {
                             }
                         }
                     }}>
-                        <div>
-                            <label htmlFor="book_name"
-                                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
-                            <input type="text" id="book_name"
-                                   className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                                   placeholder="Name of the book" required
-                                   value={name}
-                                   onChange={(e) => setName(e.target.value)}
-                            />
+                        <div className="flex flex-row gap-8">
+                            <div className="w-1/2">
+                                <label htmlFor="book_name"
+                                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                                <input type="text" id="book_name"
+                                       className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                                       placeholder="Name of the book" required
+                                       value={name}
+                                       onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
+                            <div className="w-1/2">
+                                <label htmlFor="book_isbn"
+                                       className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">ISBN</label>
+                                <input type="text" id="book_isbn"
+                                       className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                                       placeholder="ISBN of the book" required
+                                       value={isbn}
+                                       onChange={(e) => setIsbn(e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="flex flex-row gap-8">
@@ -251,7 +212,10 @@ export default function BookEdit(queryParams: PageParams) {
                                         className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                                         required
                                         value={selectedAuthors}
-                                        onChange={(e) => { console.log(e.target.value) }}
+                                        onChange={(e) => {
+                                            const values = Array.from(e.target.selectedOptions, option => option.value);
+                                            setSelectedAuthors(values);
+                                        }}
                                 >
                                     {authors.map((author) => {
                                             return <option key={author.$id} value={author.$id}>{author.Name}</option>
@@ -262,7 +226,8 @@ export default function BookEdit(queryParams: PageParams) {
                                 <div className="mt-2">
                                     <div>
                                         <label htmlFor="add_author_name"
-                                               className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Add Author</label>
+                                               className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Add
+                                            Author</label>
                                         <div className="relative">
                                             <input type="text" id="add_author_name"
                                                    className="block w-full p-4 ps-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:outline-none"
@@ -303,13 +268,11 @@ export default function BookEdit(queryParams: PageParams) {
                                         className="bg-gray-50 border focus:outline-none border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                                         required
                                         value={selectedPublisher}
-                                        onChange={(e) => { console.log(e.target.value); setSelectedPublisher(e.target.value) }}
+                                        onChange={(sel) => { setSelectedPublisher(sel.target.value)  }}
                                 >
-                                    {publisher.map((publisher) => {
-                                            return <option key={publisher.$id}
-                                                           value={publisher.$id}>{publisher.Name}</option>
-                                        }
-                                    )}
+                                    {publisher.map((pub) => {
+                                        return <option key={pub.$id} value={pub.$id}>{pub.Name}</option>
+                                    })}
                                 </select>
 
                                 <div className="mt-2">
@@ -352,7 +315,7 @@ export default function BookEdit(queryParams: PageParams) {
                         </div>
 
                         <div className="flex flex-row gap-8">
-                            <div className="w-1/2">
+                            <div className="w-1/3">
                                 <label htmlFor="pages"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Number
                                     of pages</label>
@@ -364,7 +327,7 @@ export default function BookEdit(queryParams: PageParams) {
                                 />
                             </div>
 
-                            <div className="w-1/2">
+                            <div className="w-1/3">
                                 <label htmlFor="book_year"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Published
                                     in</label>
@@ -374,6 +337,16 @@ export default function BookEdit(queryParams: PageParams) {
                                        value={publishedIn}
                                        onChange={(e) => setPublishedIn(parseInt(e.target.value))}
                                 />
+                            </div>
+
+                            <div className="w-1/3 flex flex-col justify-center">
+                                <label className="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value={""} onChange={(e) => setLoadImage(e.target.checked)}
+                                           checked={loadImage} className="sr-only peer"/>
+                                    <div
+                                        className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Load Cover</span>
+                                </label>
                             </div>
                         </div>
 
@@ -387,7 +360,7 @@ export default function BookEdit(queryParams: PageParams) {
                                         value={readingState}
                                         onChange={(e) => {
                                             const selectedState = parseInt(e.target.value);
-                                            if(selectedState != 2) {
+                                            if (selectedState != 2) {
                                                 setFinishedAt("1970-01-01 00:00:00");
                                                 setRating(0.0);
                                             }
@@ -416,7 +389,7 @@ export default function BookEdit(queryParams: PageParams) {
                             <div className="w-1/3">
                                 <label htmlFor="rating"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Rating</label>
-                                <input disabled={(readingState != 2)} type="number" min={0} max={10} id="rating"
+                                <input disabled={(readingState != 2)} type="number" min={0} max={10} step={0.1} id="rating"
                                        onChange={(e) => setRating(parseFloat(e.target.value))}
                                        value={rating}
                                        className="bg-gray-50 border focus:outline-none border-gray-300 disabled:text-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"

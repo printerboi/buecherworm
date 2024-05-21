@@ -7,18 +7,31 @@ import {Author, Book, BookState} from "@/lib/types/books";
 import moment from "moment";
 import {it} from "node:test";
 
+interface PageParams {
+    searchParams: {
+        query: string
+    }
+}
 
-export default function Books() {
+export default function Books(query: PageParams) {
     const [ books, setBooks ] = useState(Array<Book>());
     const [ offset, setOffset ] = useState(0);
     const [ perPage, setPerPage ] = useState(50);
+    const [ search, setSearch ] = useState(query.searchParams.query);
 
     useEffect(() => {
         const getData = async () => {
             const result = await databases.listDocuments(
                 process.env.NEXT_PUBLIC_DATABASE as string, // databaseId
                 'books', // collectionId
-                [Query.offset(offset * perPage), Query.limit(perPage)] // queries (optional)
+                [
+                    Query.offset(offset * perPage),
+                    Query.limit(perPage),
+                    Query.or( [
+                        Query.contains("Name", search),
+                        Query.contains("isbn", search),
+                    ])
+                ] // queries (optional)
             );
 
             if(result.documents){
@@ -27,11 +40,11 @@ export default function Books() {
         }
 
         getData();
-    }, []);
+    }, [search]);
 
     useEffect(() => {
-        console.log(books);
-    }, [books]);
+        console.log(query);
+    }, []);
 
 
     const ReadState = (props:{ state: BookState, finishedAt?: number }) => {
@@ -60,7 +73,7 @@ export default function Books() {
             if(props.rating <= 3){
                 color = "red";
             }else if(props.rating > 3 && props.rating <= 8 ){
-                color = "blue";
+                color = "yellow";
             }else{
                 color = "green";
             }
@@ -81,38 +94,35 @@ export default function Books() {
 
 
     const ListItem = ({item}: { item: Book }) => {
-        const [ image, setImage ] = useState<URL>(new URL("http://localhost/v1/storage/buckets/664a561100261dd76e96/files/PLACEHOLDER/view?project=6649f45b00123d19538f&mode=admin"));
+        const [ placeholder, setPlaceholder ] = useState<URL>(new URL("http://localhost/v1/storage/buckets/664a561100261dd76e96/files/PLACEHOLDER/view?project=6649f45b00123d19538f&mode=admin"));
 
         useEffect(() => {
-            const getImage = async () => {
+            const loadPlaceholder = async () => {
                 try{
-                    const result = storage.getFilePreview(
-                        process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
-                        item.$id, // fileId
-                    );
-
-                    console.log(result);
-                    setImage(result);
-                }catch (e){
                     const result = storage.getFilePreview(
                         process.env.NEXT_PUBLIC_BOOK_IMAGE_BUCKET as string, // bucketId
                         "PLACEHOLDER", // fileId
                     );
 
-                    setImage(result);
-                }
+                    console.log(result);
+                    setPlaceholder(result);
+                }catch (e){}
             }
 
-            getImage();
+            loadPlaceholder();
         }, []);
+
+        const getCoverUrl = (key: string, value: string, size: string) => {
+            return `https://covers.openlibrary.org/b/${key}/${value}-${size}.jpg `
+        }
 
         return (
             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <td className="px-6 py-4">
                     <div className="flex-shrink-0">
-                        <img className="w-16 h-16 rounded-full"
-                             src={image.href}
-                             alt="Neil image"/>
+                        <img className="w-16 h-16 object-scale-down"
+                             src={(item.loadImage)? getCoverUrl("ISBN", item.isbn, "S") : placeholder.href}
+                             alt="Cover"/>
                     </div>
                 </td>
                 <td className="px-6 py-4">
@@ -200,7 +210,10 @@ export default function Books() {
                                 </div>
                                 <input type="search" id="default-search"
                                        className="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                       placeholder="Search Mockups, Logos..." required/>
+                                       placeholder="Search Mockups, Logos..."
+                                       value={search}
+                                       onChange={(e) => { setSearch(e.target.value); }}
+                                       required/>
                                 <button type="submit"
                                         className="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Search
                                 </button>
