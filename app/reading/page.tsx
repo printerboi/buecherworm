@@ -7,7 +7,7 @@ import {databases} from "@/appwrite";
 import {Query} from "appwrite";
 import {number} from "prop-types";
 
-export default function Home() {
+export default function Reading() {
     const [ books, setBooks ] = useState(Array<Book>());
     useEffect(() => {
         const getData = async () => {
@@ -15,7 +15,7 @@ export default function Home() {
                 process.env.NEXT_PUBLIC_DATABASE as string, // databaseId
                 'books', // collectionId
                 [
-                    Query.equal("state", 2)
+                    Query.equal("state", 1)
                 ] // queries (optional)
             );
 
@@ -55,7 +55,17 @@ export default function Home() {
             <HeaderBar />
             <div className="w-full">
                 <div className="grid grid-cols-6 gap-8">
-                    <BookGrid />
+                    {
+                        (books.length != 0)?
+                            <BookGrid />:
+                            <>
+                                <div className="col-span-2" />
+                                <div className="col-span-2 flex flex-row justify-center items-center font-bold text-4xl text-center text-gray-400">
+                                    <h2>I'm not currently reading anything..</h2>
+                                </div>
+                                <div className="col-span-2"/>
+                            </>
+                    }
                 </div>
             </div>
         </div>

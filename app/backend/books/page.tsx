@@ -6,6 +6,8 @@ import {Query} from "appwrite";
 import {Author, Book, BookState} from "@/lib/types/books";
 import moment from "moment";
 import {it} from "node:test";
+import {getCoverUrl} from "@/lib/util/Thumbnails";
+import Tag from "@/components/Tag/Tag";
 
 interface PageParams {
     searchParams: {
@@ -17,7 +19,7 @@ export default function Books(query: PageParams) {
     const [ books, setBooks ] = useState(Array<Book>());
     const [ offset, setOffset ] = useState(0);
     const [ perPage, setPerPage ] = useState(50);
-    const [ search, setSearch ] = useState(query.searchParams.query);
+    const [ search, setSearch ] = useState(query.searchParams.query? query.searchParams.query: "");
 
     useEffect(() => {
         const getData = async () => {
@@ -86,12 +88,6 @@ export default function Books(query: PageParams) {
         }
     }
 
-    const Tag = (props: { text: string }) => {
-        return (
-            <span className="bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">{props.text}</span>
-        );
-    }
-
 
     const ListItem = ({item}: { item: Book }) => {
         const [ placeholder, setPlaceholder ] = useState<URL>(new URL("http://localhost/v1/storage/buckets/664a561100261dd76e96/files/PLACEHOLDER/view?project=6649f45b00123d19538f&mode=admin"));
@@ -111,10 +107,6 @@ export default function Books(query: PageParams) {
 
             loadPlaceholder();
         }, []);
-
-        const getCoverUrl = (key: string, value: string, size: string) => {
-            return `https://covers.openlibrary.org/b/${key}/${value}-${size}.jpg `
-        }
 
         return (
             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">

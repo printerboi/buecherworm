@@ -38,6 +38,8 @@ export default function BookEdit(queryParams: PageParams) {
     const [ isbn, setIsbn ] = useState("");
     const [ loadImage, setLoadImage ] = useState(false);
 
+    const [ timeError, setTimeError ] = useState<boolean>(false);
+
 
     useEffect(() => {
         const loadData = async () => {
@@ -135,25 +137,39 @@ export default function BookEdit(queryParams: PageParams) {
                         if(name != "" && selectedAuthors.length > 0 && selectedPublisher != "" && publishedIn >= 1024 && publishedIn <= new Date().getFullYear() && ( readingState == 0 || readingState == 1 || readingState == 2 )){
                             try {
                                 if(readingState == 2) {
-                                    await databases.updateDocument(
-                                        process.env.NEXT_PUBLIC_DATABASE as string, // databaseId
-                                        'books', // collectionId
-                                        queryParams.params.id,
-                                        {
-                                            Name: name,
-                                            authors: selectedAuthors,
-                                            publisher: selectedPublisher,
-                                            year: publishedIn,
-                                            tags: tags,
-                                            comment: comment,
-                                            state: readingState,
-                                            rating: rating,
-                                            finishedAt: finishedAt,
-                                            pages: pages,
-                                            isbn: isbn,
-                                            loadImage: loadImage
-                                        }
-                                    );
+                                    let finishedTime = "";
+                                    let timeCorrect = true;
+                                    try {
+                                        finishedTime = moment(finishedAt).toDate().toISOString().slice(0, 19).replace('T', ' ');
+                                    }catch (e) {
+                                        timeCorrect = false;
+                                    }
+
+
+                                    if(timeCorrect) {
+                                        await databases.updateDocument(
+                                            process.env.NEXT_PUBLIC_DATABASE as string, // databaseId
+                                            'books', // collectionId
+                                            queryParams.params.id,
+                                            {
+                                                Name: name,
+                                                authors: selectedAuthors,
+                                                publisher: selectedPublisher,
+                                                year: publishedIn,
+                                                tags: tags,
+                                                comment: comment,
+                                                state: readingState,
+                                                rating: rating,
+                                                finishedAt: finishedTime,
+                                                pages: pages,
+                                                isbn: isbn,
+                                                loadImage: loadImage
+                                            }
+                                        );
+                                        router.push("/backend/books");
+                                    }else {
+                                        console.log("WRONG TIME DUMMY!");
+                                    }
                                 }else {
                                     await databases.updateDocument(
                                         process.env.NEXT_PUBLIC_DATABASE as string, // databaseId
@@ -174,8 +190,9 @@ export default function BookEdit(queryParams: PageParams) {
                                             loadImage: loadImage
                                         }
                                     );
+                                    router.push("/backend/books");
                                 }
-                                router.push("/backend/books");
+
                             }catch (err) {
                                 console.log(err);
                             }
@@ -376,13 +393,19 @@ export default function BookEdit(queryParams: PageParams) {
                                 <label htmlFor="finishedAt"
                                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Finished
                                     at</label>
-                                <input disabled={(readingState != 2)} type="date" id="finishedAt"
+                                <input disabled={(readingState != 2)} type="text" id="finishedAt"
                                        onChange={(e) => {
-                                           console.log(e.target.value);
-                                           setFinishedAt(moment(e.target.value).toDate().toISOString().slice(0, 19).replace('T', ' '))
+                                           let finishedTime = "";
+                                           try {
+                                               finishedTime = moment(e.target.value).toDate().toISOString().slice(0, 19).replace('T', ' ');
+                                               setTimeError(false);
+                                           }catch (e) {
+                                               setTimeError(true);
+                                           }
+                                           setFinishedAt(e.target.value);
                                        }}
                                        value={finishedAt}
-                                       className="bg-gray-50 border focus:outline-none border-gray-300 disabled:text-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                                       className={`bg-gray-50 border focus:outline-none disabled:text-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${timeError? "border-red-500": "border-gray-300"}`}
                                 />
                             </div>
 
