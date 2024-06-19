@@ -61,7 +61,7 @@ export default function Reading() {
                             <>
                                 <div className="col-span-2" />
                                 <div className="col-span-2 flex flex-row justify-center items-center font-bold text-4xl text-center text-gray-400">
-                                    <h2>I'm not currently reading anything..</h2>
+                                    <h2>I&apos;m not currently reading anything..</h2>
                                 </div>
                                 <div className="col-span-2"/>
                             </>
