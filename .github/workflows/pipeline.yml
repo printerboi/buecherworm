@@ -29,8 +29,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            printerboi{buecherworm}:${{ github.sha }}
-            printerboi/{buecherworm}:latest
+            printerboi/buecherworm:${{ github.sha }}
+            printerboi/buecherworm:latest
           secrets: |
             NEXT_APPWRITE_KEY=${{ secrets.APPWRITE_KEY }}
             NEXT_PUBLIC_APPWRITE_ENDPOINT=${{ secrets.APPWRITE_ENDPOINT }}
