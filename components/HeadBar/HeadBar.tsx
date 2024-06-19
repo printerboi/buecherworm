@@ -1,3 +1,4 @@
+import Image from 'next/image';
 
 export default function HeaderBar(){
     return (
@@ -6,7 +7,7 @@ export default function HeaderBar(){
                 <div className="flex lg:flex-1">
                     <a href="#" className="-m-1.5 p-1.5">
                         <span className="sr-only">Your Company</span>
-                        <img className="h-8 w-auto" src="https://maximiliankrebs.com/images/logo-dark.svg" alt="" />
+                        <Image width={300} height={243} alt={"logo"} className="h-8 w-auto" src="/logo.png" />
                     </a>
                 </div>
                 <div className="flex lg:hidden">
